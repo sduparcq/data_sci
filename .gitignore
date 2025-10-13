@@ -1,1 +1,72 @@
-/.venv
+# --- Environnements virtuels ---
+.venv/
+venv/
+env/
+ENV/
+*.env
+
+# --- Python compilé ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Fichiers de logs et temporaires ---
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.tmp
+*.temp
+
+# --- Données de test / coverage ---
+.coverage
+*.cover
+htmlcov/
+.tox/
+.nox/
+.cache/
+.pytest_cache/
+
+# --- Configs locales ---
+*.sqlite3
+*.db
+instance/
+*.pid
+
+# --- Notebooks et checkpoints ---
+.ipynb_checkpoints/
+
+# --- Build / distribution ---
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# --- IDEs / éditeurs ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# --- macOS / Windows ---
+.DS_Store
+Thumbs.db
+
+# --- Autres fichiers sensibles ---
+secrets.json
+config.json
+.env.local
+.env.production
+.env.test

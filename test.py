@@ -21,9 +21,10 @@ with open("columns.json", "w", encoding="utf-8") as f:
     json.dump(list(cols_set), f, ensure_ascii=False, indent=2)
 
 
-## COLUMNS LOADING
-# with open("columns.json", "w", encoding="utf-8") as f:
+## COLUMNS LOADING f:
 #     columns = list(json.load(f))
 
 # print(columns)
 
+
+# with open("columns.json", "w", encoding="utf-8") as
