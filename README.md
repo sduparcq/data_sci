@@ -5,6 +5,7 @@ windows : .venv/Scripts/Activate.ps1
 
 ### Features
 
-- [ ] nombre de truc executer par l'utilisateur --> faire un split de la string + len de la liste
-- [ ] recuperer toutes les actions faites par les utilisateur + classer --> parsing + reconnaissance de mots
-- [ ]
+- [ ] nombre d'actions faites par l'utilisateur
+- [ ] délai entre chacune des actions de l'utilisateur (entre chaque t)
+- [ ] dans les xxxx.xxxx.xxxx --> faire un graph des zones du site   ---> stylé mais trop chiant
+- [ ]  
