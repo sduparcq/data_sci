@@ -1,11 +1,12 @@
 # data_sci
 
-### Activer le .venv
-windows : .venv/Scripts/Activate.ps1
+### A faire 
 
-### Features
+- [ ] Porter quelques features intéressantes de la v1 vers cette nouvelle version
+- [ ] Labéliser les différents écrans du logiciel --> faire des features à l'aide de ça (genre chemin emprunter par l'utilisateur ou jcp)
+- [ ] Type d'écran
+- [ ] Vérifier que le bagging est bien utilisé par les algos
+- [ ] Rajouter d'autres algo différent de random forest / xgboost
+- [ ] Train les models -> faire un clustering des data pour voir quel model est le plus performant en fonction du cluster de data -> faire cela dans la prédiction (retrouver le cluster de la row puis appliquer la prédiction du model adapter à ce cluster)
 
-- [ ] nombre d'actions faites par l'utilisateur
-- [ ] délai entre chacune des actions de l'utilisateur (entre chaque t)
-- [ ] dans les xxxx.xxxx.xxxx --> faire un graph des zones du site   ---> stylé mais trop chiant
-- [ ]  
+
