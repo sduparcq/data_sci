@@ -10,6 +10,11 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+
+
 
 class Pipeline():
     
@@ -139,6 +144,55 @@ class Pipeline():
 
         return self.model
 
+
+    def feature_importance_analysis(
+        self, top_n: int = 20, method: str = "model", X_train=None, X_val=None, y_train=None, y_val=None
+    ):
+        if X_train is None or X_val is None or y_train is None or y_val is None:
+            # reprendre les data déjà prepared plutot que re run prepared data ici ?
+            # sinon mettre un cache peut-être utile
+            X_train, X_val, y_train, y_val = self.prepare_data()
+
+        if not hasattr(self, "model"):
+            raise ValueError("Aucun modèle entraîné. Entraînez le modèle avant d'analyser les features.")
+
+        if method == "model":
+            if hasattr(self.model, "feature_importances_"):
+                importances = self.model.feature_importances_
+                fi_df = pd.DataFrame({
+                    "feature": X_train.columns,
+                    "importance": importances
+                }).sort_values(by="importance", ascending=False)
+            else:
+                raise ValueError("Le modèle ne supporte pas l'attribut feature_importances_.")
+
+        elif method == "permutation":
+            result = permutation_importance(self.model, X_val, y_val, n_repeats=10, random_state=42, n_jobs=-1)
+            fi_df = pd.DataFrame({
+                "feature": X_val.columns,
+                "importance_mean": result.importances_mean,
+                "importance_std": result.importances_std
+            }).sort_values(by="importance_mean", ascending=False)
+
+        else:
+            raise ValueError("Méthode inconnue. Choisir 'model' ou 'permutation'.")
+
+        print(f"\nTop {top_n} features les plus importantes:")
+        print(fi_df.head(top_n))
+
+        plt.figure(figsize=(10,6))
+        sns.barplot(
+            x=fi_df.iloc[:top_n, 1] if method=="model" else fi_df.iloc[:top_n]["importance_mean"],
+            y=fi_df.iloc[:top_n]["feature"],
+            palette="viridis"
+        )
+        plt.title(f"Top {top_n} feature importances ({method})")
+        plt.xlabel("Importance")
+        plt.ylabel("Feature")
+        plt.tight_layout()
+        plt.show()
+
+        return fi_df
 
     def predict(self, df):
         if not hasattr(self, "model"):

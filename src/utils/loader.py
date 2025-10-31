@@ -1,5 +1,7 @@
 import pandas as pd
 import os
+from .memoizer import Memoizer
+
 
 def load_data(path: str):
     cwd = os.getcwd()

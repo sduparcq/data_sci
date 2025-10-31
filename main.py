@@ -8,8 +8,15 @@ base_features = [
     'nav',
     'speed',
     'session_time',
-    'nb_action'
-]
+    'global_features',
+    "action_features",
+    "screen_features",
+    'screen_config_features',
+    "chaine_features",
+    "temporal_features",
+    "full_path_features",
+    "screen_transition_tfidf_features"
+    ]
 
 advanced_features = [
     'action_per_tspan'
@@ -28,7 +35,12 @@ pipe.load_all_data()
 # pipe.clear_cache()
 
 pipe.compute_base_features()
+# print(pipe.train_df_computed.describe())
+
 pipe.compute_advanced_features()
 
 
+
 pipe.train_random_forest()
+
+pipe.feature_importance_analysis()
