@@ -19,6 +19,10 @@ class BaseFeatureBuilder:
         self.le_action = LabelEncoder()
         self.le_module = LabelEncoder()
 
+        self.top_n_screen_conf = 10
+        self.top_n_chaine = 20
+        self.top_n_action = 20
+
 
         self.pattern_time = re.compile(r"t\d*[05](?=,|$)")
         self.pattern_ecran = re.compile(r"\((.*?)\)")
@@ -125,6 +129,7 @@ class BaseFeatureBuilder:
 
 
     def action_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        top_n = self.top_n_action
         df["derived_action"] = df["full_items"].apply(self.extract_actions)
 
         df["n_actions"] = df["derived_action"].apply(len)
@@ -133,32 +138,38 @@ class BaseFeatureBuilder:
             lambda row: 0 if row["n_actions"] == 0 else (1 - row["n_unique_actions"] / row["n_actions"]),
             axis=1,
         )
+        df["action_entropy"] = df["derived_action"].apply(
+            lambda x: 0 if not x else -sum((c / len(x)) * np.log2(c / len(x)) for c in Counter(x).values())
+        )
 
+        # --- Features catégorielles classiques ---
         df["first_action"] = df["derived_action"].apply(lambda x: x[0] if x else "NONE")
         df["second_action"] = df["derived_action"].apply(lambda x: x[1] if len(x) > 1 else "NONE")
         df["last_action"] = df["derived_action"].apply(lambda x: x[-1] if x else "NONE")
         df["penultimate_action"] = df["derived_action"].apply(lambda x: x[-2] if len(x) > 1 else "NONE")
-
         df["most_common_action"] = df["derived_action"].apply(
             lambda x: Counter(x).most_common(1)[0][0] if x else "NONE"
         )
         df["second_common_action"] = df["derived_action"].apply(
             lambda x: Counter(x).most_common(2)[1][0] if len(Counter(x)) > 1 else "NONE"
         )
-        df["action_entropy"] = df["derived_action"].apply(
-            lambda x: 0 if not x else -sum((c / len(x)) * np.log2(c / len(x)) for c in Counter(x).values())
-        )
 
         categorical_cols = [
             "first_action", "second_action", "last_action", "penultimate_action",
             "most_common_action", "second_common_action"
         ]
-
         for col in categorical_cols:
             le = getattr(self, f"le_{col}", LabelEncoder())
             encoded = le.fit_transform(df[col].astype(str))
             setattr(self, f"le_{col}", le)
             df[col + "_enc"] = encoded
+
+        # --- Top N actions ---
+        all_actions = [a for actions in df["derived_action"] for a in actions]
+        top_actions = [k for k, _ in Counter(all_actions).most_common(top_n)]
+
+        for action in top_actions:
+            df[f"count_{action}"] = df["derived_action"].apply(lambda x: x.count(action))
 
         return df
 
@@ -245,6 +256,7 @@ class BaseFeatureBuilder:
 
 
     def screen_config_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        top_n = self.top_n_screen_conf
         df["derived_screen_configs"] = df["full_items"].apply(self.extract_screen_configs)
 
         df["n_screen_configs"] = df["derived_screen_configs"].apply(len)
@@ -267,18 +279,23 @@ class BaseFeatureBuilder:
             "first_screen_config", "last_screen_config",
             "most_common_screen_config", "second_common_screen_config"
         ]
-
         for col in categorical_cols:
             le = getattr(self, f"le_{col}", LabelEncoder())
             encoded = le.fit_transform(df[col].astype(str))
             setattr(self, f"le_{col}", le)
             df[col + "_enc"] = encoded
 
+        # --- Top N configurations ---
+        all_configs = [c for configs in df["derived_screen_configs"] for c in configs]
+        top_configs = [k for k, _ in Counter(all_configs).most_common(top_n)]
+
+        for config in top_configs:
+            df[f"count_{config}"] = df["derived_screen_configs"].apply(lambda x: x.count(config))
+
         return df
 
-
     def chaine_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Crée des features plus précises sur les chaînes $...$ extraites."""
+        top_n = self.top_n_chaine
         df["derived_chaines"] = df["full_items"].apply(self.extract_chaines)
 
         df["n_chaines"] = df["derived_chaines"].apply(len)
@@ -287,6 +304,9 @@ class BaseFeatureBuilder:
             lambda row: 0 if row["n_chaines"] == 0 else (1 - row["n_unique_chaines"] / row["n_chaines"]),
             axis=1,
         )
+        df["chaine_entropy"] = df["derived_chaines"].apply(
+            lambda x: 0 if not x else -sum((c / len(x)) * np.log2(c / len(x)) for c in Counter(x).values())
+        )
 
         df["first_chaine"] = df["derived_chaines"].apply(lambda x: x[0] if x else "NONE")
         df["last_chaine"] = df["derived_chaines"].apply(lambda x: x[-1] if x else "NONE")
@@ -294,17 +314,18 @@ class BaseFeatureBuilder:
             lambda x: Counter(x).most_common(1)[0][0] if x else "NONE"
         )
 
-        df["chaine_entropy"] = df["derived_chaines"].apply(
-            lambda x: 0 if not x else -sum((c / len(x)) * np.log2(c / len(x)) for c in Counter(x).values())
-        )
-
         categorical_cols = ["first_chaine", "last_chaine", "most_common_chaine"]
-
         for col in categorical_cols:
             le = getattr(self, f"le_{col}", LabelEncoder())
             encoded = le.fit_transform(df[col].astype(str))
             setattr(self, f"le_{col}", le)
             df[col + "_enc"] = encoded
+
+        all_chaines = [c for chaines in df["derived_chaines"] for c in chaines]
+        top_chaines = [k for k, _ in Counter(all_chaines).most_common(top_n)]
+
+        for chaine in top_chaines:
+            df[f"count_{chaine}"] = df["derived_chaines"].apply(lambda x: x.count(chaine))
 
         return df
 

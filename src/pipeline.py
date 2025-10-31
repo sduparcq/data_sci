@@ -9,11 +9,12 @@ from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+from sklearn.inspection import permutation_importance
 
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-
+import numpy as np
 
 
 class Pipeline():
@@ -144,6 +145,26 @@ class Pipeline():
 
         return self.model
 
+    #region Analysis
+
+    def feature_correlation(self, df=None, top_n=20, plot=True):
+        if df is None:
+            df = self.train_df_computed.copy()
+        
+        numeric_cols = df.select_dtypes(include=np.number).columns.tolist()
+        corr_matrix = df[numeric_cols].corr()
+
+        if plot:
+            plt.figure(figsize=(12, 10))
+            sns.heatmap(corr_matrix, annot=False, cmap='coolwarm', center=0)
+            plt.title("Heatmap des corrélations entre features")
+            plt.show()
+
+        corr_matrix_abs = corr_matrix.abs()
+        corr_matrix_abs.values[[np.arange(len(corr_matrix))]*2] = 0  # ignorer diag
+        top_corr = corr_matrix_abs.unstack().sort_values(ascending=False).drop_duplicates()
+        print(f"Top {top_n} corrélations entre features :\n", top_corr.head(top_n))
+        return corr_matrix, top_corr.head(top_n)
 
     def feature_importance_analysis(
         self, top_n: int = 20, method: str = "model", X_train=None, X_val=None, y_train=None, y_val=None
@@ -193,6 +214,18 @@ class Pipeline():
         plt.show()
 
         return fi_df
+    
+    def feature_summary(self, df=None):
+        if df is None:
+            df = self.train_df_computed.copy()
+        
+        numeric_cols = df.select_dtypes(include=np.number).columns.tolist()
+        summary = df[numeric_cols].describe().T
+        summary["missing"] = df[numeric_cols].isna().sum()
+        summary["inf"] = np.isinf(df[numeric_cols]).sum()
+        return summary
+    
+    #endregion
 
     def predict(self, df):
         if not hasattr(self, "model"):

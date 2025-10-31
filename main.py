@@ -43,4 +43,7 @@ pipe.compute_advanced_features()
 
 pipe.train_random_forest()
 
+
+pipe.feature_correlation()
+pipe.feature_summary()
 pipe.feature_importance_analysis()
