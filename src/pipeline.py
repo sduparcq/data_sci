@@ -226,14 +226,66 @@ class Pipeline():
         return summary
     
     #endregion
+    def train_and_predict_full(self, model_type: str = "random_forest", submission_path: str = "./data/submissions.csv", **kwargs):
+        df_train = self.train_df_computed.copy()
+        df_test = self.test_df_computed.copy()
 
-    def predict(self, df):
-        if not hasattr(self, "model"):
-            raise ValueError("Aucun modèle entraîné. Utilisez train_random_forest() ou train_xgboost() d'abord.")
-        
-        numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
-        X = df[numeric_cols].copy()
-        return self.model.predict(X)
+        le = LabelEncoder()
+        df_train[self.target_column] = le.fit_transform(df_train[self.target_column])
+        self.label_encoder = le
+
+        numeric_cols_train = df_train.select_dtypes(include=["number"]).columns.tolist()
+        numeric_cols_test = df_test.select_dtypes(include=["number"]).columns.tolist()
+
+        if self.target_column in numeric_cols_train:
+            numeric_cols_train.remove(self.target_column)
+
+        common_cols = list(set(numeric_cols_train) & set(numeric_cols_test))
+        for col in numeric_cols_train:
+            if col not in common_cols:
+                df_test[col] = 0
+        X_train = df_train[numeric_cols_train].copy()
+        y_train = df_train[self.target_column].copy()
+        X_test = df_test[numeric_cols_train].copy()  # garder l'ordre du train
+
+        if model_type.lower() == "random_forest":
+            from sklearn.ensemble import RandomForestClassifier
+            model = RandomForestClassifier(
+                n_estimators=kwargs.get("n_estimators", 200),
+                max_depth=kwargs.get("max_depth", None),
+                bootstrap=kwargs.get("bootstrap", True),
+                max_samples=kwargs.get("max_samples", None),
+                random_state=kwargs.get("random_state", 42)
+            )
+        elif model_type.lower() == "xgboost":
+            from xgboost import XGBClassifier
+            model = XGBClassifier(
+                n_estimators=kwargs.get("n_estimators", 300),
+                learning_rate=kwargs.get("learning_rate", 0.05),
+                max_depth=kwargs.get("max_depth", 6),
+                subsample=kwargs.get("subsample", 0.8),
+                colsample_bytree=kwargs.get("colsample_bytree", 0.8),
+                random_state=kwargs.get("random_state", 42),
+                use_label_encoder=False,
+                eval_metric="logloss"
+            )
+        else:
+            raise ValueError("model_type doit être 'random_forest' ou 'xgboost'")
+
+        model.fit(X_train, y_train)
+        self.model = model
+
+        y_pred_encoded = model.predict(X_test)
+        y_pred = le.inverse_transform(y_pred_encoded)
+
+        submission_df = pd.DataFrame({
+            "RowId": range(1, len(y_pred) + 1),
+            "prediction": y_pred
+        })
+        submission_df.to_csv(submission_path, index=False)
+        print(f"✅ Submission saved at {submission_path}")
+
+        return submission_df
 
 
 
