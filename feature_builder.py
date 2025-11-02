@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Sequence, Tuple
 
 import pandas as pd
 
-from test3 import (
+from data_sci.extraction import (
     extract_chaine,
     extract_conf_ecran,
     extract_ecran,
