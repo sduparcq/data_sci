@@ -1,51 +1,44 @@
-from src.pipeline import Pipeline
-
+from src import pipeline
 
 train_path="/data/train.csv"
 test_path="/data/test.csv"
 
-base_features = [
-    'nav',
-    'speed',
-    'session_time',
-    'global_features',
-    "action_features",
-    "screen_features",
-    'screen_config_features',
-    "chaine_features",
-    "temporal_features",
-    "full_path_features",
-    "screen_transition_tfidf_features"
-    ]
 
-advanced_features = [
-    'action_per_tspan'
-]
-
-pipe = Pipeline(
+pipe_action = pipeline.Pipeline(
     test_path=test_path,
-    train_path=train_path,
-    base_features_list=base_features,
-    advanced_features_list=advanced_features
+    train_path=train_path
 )
 
+pipe_temporal = pipeline.Pipeline(
+    test_path=test_path,
+    train_path=train_path
+)
 
-pipe.load_all_data()
+pipe_screen = pipeline.Pipeline(
+    test_path=test_path,
+    train_path=train_path
+)
 
-# pipe.clear_cache()
+pipe_screen_config = pipeline.Pipeline(
+    test_path=test_path,
+    train_path=train_path
+)
 
-pipe.compute_base_features()
-# print(pipe.train_df_computed.describe())
+pipe_chaine = pipeline.Pipeline(
+    test_path=test_path,
+    train_path=train_path
+)
 
-pipe.compute_advanced_features()
+pipes = [pipe_action, pipe_temporal, pipe_screen, pipe_screen_config, pipe_chaine]
+
+for pipe in pipes:
+    pipe.load_all_data()
 
 
+features_at_test = ["action_features","temporal_features",
+                    "screen_features", "screen_config_features",
+                    "chaine_features"]
 
-pipe.train_random_forest()
 
-
-pipe.feature_correlation()
-pipe.feature_summary()
-pipe.feature_importance_analysis()
-
-pipe.train_and_predict_full()
+for i, features in enumerate(features_at_test):
+    pipes[i].compute_features(feature_list=[features])
